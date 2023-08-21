@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -15,9 +16,8 @@ import (
 // curl -N https://minimal-sse-iy4vzwh2ta-ew.a.run.app
 
 func main() {
-
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	r := chi.NewRouter()
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		flusher, ok := w.(http.Flusher)
 		if !ok {
 			panic("Streaming not supported!")
@@ -45,8 +45,7 @@ func main() {
 	}
 	server := &http.Server{
 		Addr:    ":" + port,
-		Handler: h2c.NewHandler(mux, &http2.Server{}),
-		// Don't forget timeouts!
+		Handler: h2c.NewHandler(r, &http2.Server{}),
 	}
 	log.Println("Serving http://localhost:" + port)
 	log.Fatal(server.ListenAndServe())
